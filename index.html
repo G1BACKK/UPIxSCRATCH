@@ -7,10 +7,9 @@
   <title>Scratch Card</title>
   <style>
     body {
-      background: #fff;
       margin: 0;
-      padding: 0;
       font-family: sans-serif;
+      background: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -86,18 +85,21 @@
       animation: blink 2s infinite;
     }
 
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
 
+    /* Modal */
     .modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0, 0, 0, 0.5);
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: 9999;
+    }
+
+    .modal.show {
+      display: flex;
     }
 
     .modal-box {
@@ -130,28 +132,21 @@
 </head>
 <body>
 
-  <!-- 🔝 Top Banner -->
-  <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" alt="Top" class="top-img" />
+  <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" class="top-img" />
 
-  <!-- 🧧 Scratch Card -->
   <div class="card-container">
-    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" alt="Reward" class="reward-layer hidden" id="rewardImage" />
+    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" class="reward-layer hidden" id="rewardImage" />
     <div class="reward-amount hidden" id="rewardAmount">₹495</div>
     <canvas id="scratchCanvas"></canvas>
     <div class="scratch-text" id="scratchText">Scratch here!</div>
   </div>
 
-  <!-- 🔻 Bottom Banner -->
-  <img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" alt="Bottom" class="bottom-img" />
-
-  <!-- 🔊 Sound -->
+  <img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" class="bottom-img" />
   <audio id="winSound" src="https://files.catbox.moe/0pc7om.mp3"></audio>
-
-  <!-- 🎉 Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- 💳 UPI Modal -->
-  <div id="upiModal" class="modal hidden">
+  <!-- Modal -->
+  <div id="upiModal" class="modal">
     <div class="modal-box">
       <h2>Pay ₹495 using UPI App</h2>
       <button class="btn-gpay" onclick="pay('gpay')">Google Pay</button>
@@ -160,16 +155,15 @@
     </div>
   </div>
 
-  <!-- 👇 Script -->
   <script>
     const canvas = document.getElementById("scratchCanvas");
     const ctx = canvas.getContext("2d");
-    const scratchText = document.getElementById("scratchText");
+    const container = document.querySelector(".card-container");
     const rewardImage = document.getElementById("rewardImage");
     const rewardAmount = document.getElementById("rewardAmount");
-    const sound = document.getElementById("winSound");
+    const scratchText = document.getElementById("scratchText");
+    const winSound = document.getElementById("winSound");
     const modal = document.getElementById("upiModal");
-    const container = document.querySelector(".card-container");
 
     canvas.width = container.offsetWidth;
     canvas.height = container.offsetHeight;
@@ -196,7 +190,7 @@
       lastX = x;
       lastY = y;
       scratch(x, y, true);
-      try { sound.play().catch(() => {}); } catch (e) {}
+      try { winSound.play().catch(() => {}); } catch (e) {}
     }
 
     function scratch(x, y, start = false) {
@@ -224,10 +218,6 @@
       return (cleared / (imgData.data.length / 4)) * 100;
     }
 
-    function showConfetti() {
-      confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
-    }
-
     function checkReveal() {
       if (revealed || getScratchedPercent() < 30) return;
       revealed = true;
@@ -235,40 +225,20 @@
       scratchText.classList.add("hidden");
       rewardImage.classList.remove("hidden");
       rewardAmount.classList.remove("hidden");
-      try { sound.play().catch(() => {}); } catch (e) {}
-      showConfetti();
-      setTimeout(() => modal.classList.remove("hidden"), 3000);
+      try { winSound.play().catch(() => {}); } catch (e) {}
+      confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
+      setTimeout(() => modal.classList.add("show"), 3000);
     }
 
-    // Mouse
-    canvas.addEventListener("mousedown", (e) => {
-      const { x, y } = getPosition(e);
-      startScratch(x, y);
-    });
-    canvas.addEventListener("mousemove", (e) => {
-      if (!isDrawing) return;
-      const { x, y } = getPosition(e);
-      scratch(x, y);
-      checkReveal();
-    });
+    canvas.addEventListener("mousedown", e => startScratch(...Object.values(getPosition(e))));
+    canvas.addEventListener("mousemove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); });
     canvas.addEventListener("mouseup", () => isDrawing = false);
     canvas.addEventListener("mouseleave", () => isDrawing = false);
 
-    // Touch
-    canvas.addEventListener("touchstart", (e) => {
-      const { x, y } = getPosition(e);
-      startScratch(x, y);
-    });
-    canvas.addEventListener("touchmove", (e) => {
-      if (!isDrawing) return;
-      const { x, y } = getPosition(e);
-      scratch(x, y);
-      checkReveal();
-      e.preventDefault();
-    });
+    canvas.addEventListener("touchstart", e => startScratch(...Object.values(getPosition(e))));
+    canvas.addEventListener("touchmove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); e.preventDefault(); });
     canvas.addEventListener("touchend", () => isDrawing = false);
 
-    // UPI Redirect
     function pay(app) {
       const pa = "g1g4822917.rzp@icici";
       const tr = "RZPQhptbTHPKvHtK8qrv2";
@@ -282,11 +252,10 @@
         uri = `phonepe://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
       } else if (app === "gpay") {
         uri = `gpay://upi/pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
-      } else if (app === "paytm") {
-        uri = `paytmmp://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
       } else {
-        uri = `upi://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
+        uri = `paytmmp://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
       }
+
       window.location.href = uri;
     }
   </script>
