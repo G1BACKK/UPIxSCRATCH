@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Scratch & Claim</title>
+  <title>Scratch Card</title>
   <style>
     body {
+      background: #fff;
       margin: 0;
       padding: 0;
-      background: #fff;
       font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      position: relative;
     }
 
-    .top-img, .bottom-img {
+    .top-img,
+    .bottom-img {
       width: 100%;
       max-width: 360px;
       margin: 10px auto;
@@ -31,6 +31,7 @@
       border-radius: 25px;
       overflow: hidden;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      background: #fff;
     }
 
     .reward-layer {
@@ -48,7 +49,7 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 24px;
+      font-size: 28px;
       font-weight: bold;
       color: #d32f2f;
       animation: blink 1s infinite;
@@ -76,126 +77,72 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      padding: 10px 20px;
       background: rgba(0, 0, 0, 0.7);
       color: white;
-      padding: 10px 20px;
       border-radius: 12px;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
       animation: blink 2s infinite;
     }
 
-    .hidden { display: none; }
-
-    .popup {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #fff;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-      text-align: center;
-      z-index: 999;
-      width: 90%;
-      max-width: 340px;
+    .hidden {
       display: none;
     }
-
-    .popup h2 {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 16px;
-    }
-
-    .upi-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      margin: 8px 0;
-      padding: 10px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      color: white;
-      gap: 10px;
-    }
-
-    .upi-btn img {
-      height: 28px;
-    }
-
-    .upi-btn.phonepe { background-color: #673ab7; }
-    .upi-btn.gpay { background-color: #0f9d58; }
-    .upi-btn.paytm { background-color: #0033cc; }
   </style>
 </head>
-<body onclick="openPhonePeOnce()">
+<body>
 
-  <!-- Banner -->
+  <!-- 🔝 Top Banner -->
   <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" alt="Top" class="top-img" />
 
-  <!-- Scratch Card -->
+  <!-- 🧧 Scratch Card -->
   <div class="card-container">
+    <!-- 🎁 Reward image -->
     <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" alt="Reward" class="reward-layer hidden" id="rewardImage" />
+    <!-- 💸 ₹495 blinking -->
     <div class="reward-amount hidden" id="rewardAmount">₹495</div>
+    <!-- 🎨 Scratch layer -->
     <canvas id="scratchCanvas"></canvas>
+    <!-- 👆 Scratch instruction -->
     <div class="scratch-text" id="scratchText">Scratch here!</div>
   </div>
 
-  <!-- Banner -->
+  <!-- 🔻 Bottom Banner -->
   <img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" alt="Bottom" class="bottom-img" />
 
-  <!-- Sound -->
+  <!-- 🔊 Win Sound -->
   <audio id="winSound" src="https://files.catbox.moe/0pc7om.mp3"></audio>
 
-  <!-- Confetti -->
+  <!-- 🎉 Confetti Script -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <!-- UPI Popup -->
-  <div class="popup" id="upiPopup">
-    <h2>प्रधानमंत्री मुद्रा योजना के पैसे अपने खाते में ले</h2>
-
-    <button class="upi-btn phonepe" onclick="openPhonePe()">
-      <img src="https://i.ibb.co/d4Q0qxgM/IMG-1141.png"> PhonePe से लें
-    </button>
-
-    <button class="upi-btn gpay" onclick="openGPay()">
-      <img src="https://i.ibb.co/DHMmHM0x/IMG-1142.png"> GPay से लें
-    </button>
-
-    <button class="upi-btn paytm" onclick="openPaytm()">
-      <img src="https://i.ibb.co/35CLBQzZ/IMG-1145.png"> Paytm से लें
-    </button>
-  </div>
 
   <script>
     const canvas = document.getElementById("scratchCanvas");
     const ctx = canvas.getContext("2d");
+    const scratchText = document.getElementById("scratchText");
     const rewardImage = document.getElementById("rewardImage");
     const rewardAmount = document.getElementById("rewardAmount");
-    const scratchText = document.getElementById("scratchText");
     const sound = document.getElementById("winSound");
-    const popup = document.getElementById("upiPopup");
     const container = document.querySelector(".card-container");
 
     canvas.width = container.offsetWidth;
     canvas.height = container.offsetHeight;
 
     const scratchLayer = new Image();
+    scratchLayer.crossOrigin = "anonymous";
     scratchLayer.src = "https://i.ibb.co/nqr14xB9/IMG-1113.jpg";
+
     scratchLayer.onload = () => {
       ctx.globalCompositeOperation = "source-over";
       ctx.drawImage(scratchLayer, 0, 0, canvas.width, canvas.height);
     };
 
-    let isDrawing = false, lastX = 0, lastY = 0, revealed = false;
+    let isDrawing = false;
+    let lastX = 0, lastY = 0;
+    let revealed = false;
 
-    function getPos(e) {
+    function getPosition(e) {
       const rect = canvas.getBoundingClientRect();
       const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
       const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
@@ -207,7 +154,11 @@
       lastX = x;
       lastY = y;
       scratch(x, y, true);
-      try { sound.play().catch(() => {}); } catch (e) {}
+
+      // Ensure browser allows sound (first interaction)
+      try {
+        sound.play().catch(() => {});
+      } catch (e) {}
     }
 
     function scratch(x, y, start = false) {
@@ -215,6 +166,7 @@
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.lineWidth = 40;
+
       ctx.beginPath();
       if (start) {
         ctx.moveTo(x, y);
@@ -223,6 +175,7 @@
         ctx.lineTo(x, y);
         ctx.stroke();
       }
+
       lastX = x;
       lastY = y;
     }
@@ -237,69 +190,62 @@
     }
 
     function showConfetti() {
-      confetti({ particleCount: 160, spread: 70, origin: { y: 0.6 } });
+      confetti({
+        particleCount: 200,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
     }
 
     function checkReveal() {
       if (revealed) return;
+
       if (getScratchedPercent() >= 30) {
         revealed = true;
         canvas.classList.add("hidden");
         scratchText.classList.add("hidden");
         rewardImage.classList.remove("hidden");
         rewardAmount.classList.remove("hidden");
-        try { sound.play().catch(() => {}); } catch (e) {}
+
+        try {
+          sound.play().catch(() => {});
+        } catch (e) {}
+
         showConfetti();
-        setTimeout(() => popup.style.display = "block", 3000);
       }
     }
 
-    // Events
-    canvas.addEventListener("mousedown", e => {
-      const { x, y } = getPos(e);
+    // Mouse
+    canvas.addEventListener("mousedown", (e) => {
+      const { x, y } = getPosition(e);
       startScratch(x, y);
     });
-    canvas.addEventListener("mousemove", e => {
+
+    canvas.addEventListener("mousemove", (e) => {
       if (!isDrawing) return;
-      const { x, y } = getPos(e);
-      scratch(x, y); checkReveal();
+      const { x, y } = getPosition(e);
+      scratch(x, y);
+      checkReveal();
     });
+
     canvas.addEventListener("mouseup", () => isDrawing = false);
     canvas.addEventListener("mouseleave", () => isDrawing = false);
 
-    canvas.addEventListener("touchstart", e => {
-      const { x, y } = getPos(e);
+    // Touch
+    canvas.addEventListener("touchstart", (e) => {
+      const { x, y } = getPosition(e);
       startScratch(x, y);
     });
-    canvas.addEventListener("touchmove", e => {
+
+    canvas.addEventListener("touchmove", (e) => {
       if (!isDrawing) return;
-      const { x, y } = getPos(e);
-      scratch(x, y); checkReveal();
+      const { x, y } = getPosition(e);
+      scratch(x, y);
+      checkReveal();
       e.preventDefault();
     });
+
     canvas.addEventListener("touchend", () => isDrawing = false);
-
-    // Open UPI apps
-    function openPhonePe() {
-      window.location.href = "phonepe://pay?pa=g1g4822917.rzp@icici&pn=G1G4&tr=RZPQhptbTHPKvHtK8qrv2&am=495&cu=INR";
-    }
-
-    function openGPay() {
-      window.location.href = "gpay://upi/pay?pa=g1g4822917.rzp@icici&pn=G1G4&tr=RZPQhptbTHPKvHtK8qrv2&am=495&cu=INR";
-    }
-
-    function openPaytm() {
-      window.location.href = "paytmmp://pay?pa=g1g4822917.rzp@icici&pn=G1G4&tr=RZPQhptbTHPKvHtK8qrv2&am=495&cu=INR";
-    }
-
-    // Auto open on first click
-    let firstTouch = false;
-    function openPhonePeOnce() {
-      if (!firstTouch) {
-        firstTouch = true;
-        openPhonePe();
-      }
-    }
   </script>
 </body>
 </html>
