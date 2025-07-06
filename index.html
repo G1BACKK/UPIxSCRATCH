@@ -125,12 +125,21 @@
 
     .modal-box button {
       margin: 6px;
-      padding: 10px 18px;
+      padding: 10px 16px;
       font-size: 16px;
       border: none;
       border-radius: 10px;
       color: white;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .modal-box button img {
+      width: 28px;
+      height: 28px;
     }
 
     .btn-gpay { background: #1e88e5; }
@@ -157,9 +166,15 @@
   <div id="upiModal" class="modal">
     <div class="modal-box">
       <h2>प्रधानमंत्री मुद्रा योजना के पैसे अपने खाते में ले</h2>
-      <button class="btn-gpay" onclick="pay('gpay')">Google Pay</button>
-      <button class="btn-phonepe" onclick="pay('phonepe')">PhonePe</button>
-      <button class="btn-paytm" onclick="pay('paytm')">Paytm</button>
+      <button class="btn-gpay" onclick="pay('gpay')">
+        <img src="https://i.ibb.co/DHMmHM0x/IMG-1142.png" alt="GPay"> Google Pay
+      </button>
+      <button class="btn-phonepe" onclick="pay('phonepe')">
+        <img src="https://i.ibb.co/d4Q0qxgM/IMG-1141.png" alt="PhonePe"> PhonePe
+      </button>
+      <button class="btn-paytm" onclick="pay('paytm')">
+        <img src="https://i.ibb.co/35CLBQzZ/IMG-1145.png" alt="Paytm"> Paytm
+      </button>
     </div>
   </div>
 
@@ -269,4 +284,3 @@
   </script>
 </body>
 </html>
-
