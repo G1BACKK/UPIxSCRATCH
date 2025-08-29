@@ -79,12 +79,11 @@
       animation: blink 2s infinite;
     }
     .hidden { display: none; }
+
     .modal {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background: rgba(0,0,0,0.6);
       display: flex;
       align-items: center;
@@ -120,25 +119,25 @@
       color: #555;
     }
   </style>
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 </head>
 <body>
 
-<img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" class="top-img" alt="Top Image" onerror="this.style.display='none'">
+<img src="https://i.ibb.co/nNCT43nb/IMG-1114.jpg" class="top-img" alt="Top Image">
 <div class="card-container">
-  <img id="rewardImage" class="reward-layer hidden" src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" alt="Reward" onerror="this.style.display='none'">
+  <img id="rewardImage" class="reward-layer hidden" src="https://i.ibb.co/9m8Y3s3R/IMG-1116.png" alt="Reward">
   <div id="rewardAmount" class="reward-amount hidden">₹495</div>
   <canvas id="scratchCanvas"></canvas>
   <div id="scratchText" class="scratch-text">Scratch here!</div>
 </div>
-<img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" class="bottom-img" alt="Bottom Image" onerror="this.style.display='none'">
+<img src="https://i.ibb.co/0RrqgRTj/IMG-1120.jpg" class="bottom-img" alt="Bottom Image">
 <audio id="winSound" src="https://files.catbox.moe/phmdiy.mp3"></audio>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-<!-- Modal -->
-<div id="upiModal" class="modal">
+<div id="paymentModal" class="modal">
   <div class="modal-box">
     <h2>🎉 बधाई हो! ₹495 जीते!</h2>
-    <p>Cashfree पेज पर ले जाया जा रहा है...</p>
+    <p>आपको पेमेंट पेज पर भेजा जा रहा है...</p>
   </div>
 </div>
 
@@ -150,9 +149,8 @@ const rewardImage = document.getElementById("rewardImage");
 const rewardAmount = document.getElementById("rewardAmount");
 const scratchText = document.getElementById("scratchText");
 const winSound = document.getElementById("winSound");
-const modal = document.getElementById("upiModal");
+const modal = document.getElementById("paymentModal");
 
-// Set canvas size
 function resizeCanvas() {
   canvas.width = container.offsetWidth;
   canvas.height = container.offsetHeight;
@@ -161,22 +159,21 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-// Initialize scratch layer
 function initScratchLayer() {
-  const scratchLayer = new Image();
-  scratchLayer.crossOrigin = "anonymous";
-  scratchLayer.src = "https://i.ibb.co/nqr14xB9/IMG-1113.jpg";
-  scratchLayer.onload = () => {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = "https://i.ibb.co/nqr14xB9/IMG-1113.jpg";
+  img.onload = () => {
     ctx.globalCompositeOperation = "source-over";
-    ctx.drawImage(scratchLayer, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   };
-  scratchLayer.onerror = () => {
-    ctx.fillStyle = "#cccccc";
+  img.onerror = () => {
+    ctx.fillStyle = "#ccc";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#999999";
+    ctx.fillStyle = "#000";
     ctx.font = "20px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("Scratch here to reveal", canvas.width/2, canvas.height/2);
+    ctx.fillText("Scratch here to reveal", canvas.width / 2, canvas.height / 2);
   };
 }
 
@@ -191,10 +188,9 @@ function getPosition(e) {
 
 function startScratch(x, y) {
   isDrawing = true;
-  lastX = x;
-  lastY = y;
+  lastX = x; lastY = y;
   scratch(x, y, true);
-  try { winSound.play(); } catch (e) { console.log("Audio error:", e); }
+  winSound.play().catch(() => {});
 }
 
 function scratch(x, y, start = false) {
@@ -214,15 +210,15 @@ function scratch(x, y, start = false) {
 }
 
 function getScratchedPercent() {
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   let cleared = 0;
-  for (let i = 3; i < imgData.data.length; i += 4) {
-    if (imgData.data[i] < 128) cleared++;
+  for (let i = 3; i < imageData.data.length; i += 4) {
+    if (imageData.data[i] < 128) cleared++;
   }
-  return (cleared / (imgData.data.length / 4)) * 100;
+  return (cleared / (imageData.data.length / 4)) * 100;
 }
 
-function checkReveal() {
+async function checkReveal() {
   if (revealed || getScratchedPercent() < 30) return;
   revealed = true;
   canvas.classList.add("hidden");
@@ -230,40 +226,37 @@ function checkReveal() {
   rewardImage.classList.remove("hidden");
   rewardAmount.classList.remove("hidden");
 
-  try { winSound.play(); } catch (e) {}
-
+  winSound.play().catch(() => {});
   confetti({ particleCount: 200, spread: 70, origin: { y: 0.6 } });
 
-  // Show modal
   setTimeout(() => {
     modal.classList.add("show");
-
-    // Redirect to Cashfree after 2 sec
-    setTimeout(() => {
-      createCashfreeOrder();
-    }, 2000);
+    setTimeout(initiateCashfree, 2000);
   }, 1000);
 }
 
-async function createCashfreeOrder() {
+async function initiateCashfree() {
   try {
     const res = await fetch("https://papa-mode.onrender.com/create-order", {
       method: "POST"
     });
     const data = await res.json();
-
-    if (data && data.payment_link) {
-      window.location.href = data.payment_link;
+    if (data.payment_session_id) {
+      const cashfree = Cashfree({ mode: "production" }); // use "sandbox" for testing
+      cashfree.checkout({
+        paymentSessionId: data.payment_session_id,
+        redirectTarget: "_self"
+      });
     } else {
-      alert("Payment link not received.");
+      alert("Payment session not received.");
     }
   } catch (err) {
-    console.error("Error creating Cashfree order:", err);
-    alert("Payment error occurred.");
+    console.error("Payment error:", err);
+    alert("Payment failed to start.");
   }
 }
 
-// Event listeners
+// Event Listeners
 canvas.addEventListener("mousedown", e => startScratch(...Object.values(getPosition(e))));
 canvas.addEventListener("mousemove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); });
 canvas.addEventListener("mouseup", () => isDrawing = false);
@@ -272,7 +265,6 @@ canvas.addEventListener("touchstart", e => startScratch(...Object.values(getPosi
 canvas.addEventListener("touchmove", e => { if (!isDrawing) return; scratch(...Object.values(getPosition(e))); checkReveal(); e.preventDefault(); });
 canvas.addEventListener("touchend", () => isDrawing = false);
 
-// Preload images
 window.addEventListener('load', () => {
   const img = new Image();
   img.src = rewardImage.src;
